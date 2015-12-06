@@ -1,6 +1,5 @@
 package org.novula;
 
-import org.novula.statemachine.State;
 import org.novula.statemachine.StateMachine;
 
 import java.io.ByteArrayInputStream;
@@ -14,10 +13,10 @@ class ConnectionHandler implements Runnable
 	private final StateMachine<Integer> stateMachine;
 	private final Socket client;
 
-	public ConnectionHandler(final Socket client)
+	public ConnectionHandler(final Socket client, final StateMachine<Integer> stateMachine)
 	{
 		this.client = client;
-		stateMachine = new StateMachine<>(new State<>("init"));
+		this.stateMachine = stateMachine;
 	}
 
 	public void run()

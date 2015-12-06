@@ -1,21 +1,37 @@
 package org.novula;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import org.novula.configuration.ConfigurationMap;
+import org.novula.configuration.ConfigurationReader;
+import org.novula.statemachine.PrometheusStateMachineFactory;
+import org.novula.statemachine.StateMachineFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class NovulaPrometheus
 {
-	public static void main(final String[] args) throws IOException
+	private static final Logger LOGGER = LoggerFactory.getLogger(NovulaPrometheus.class);
+
+	public static void main(final String[] args)
 	{
+		LOGGER.info("Starting Prometheus...");
+
 		final ExecutorService executorService = Executors.newCachedThreadPool();
+		final ConfigurationMap configuration = ConfigurationReader.newJsonReader("prometheus.json").read().asMap();
+		final StateMachineFactory<Integer> stateMachineFactory = new PrometheusStateMachineFactory();
 
-		final int prometheusPort = 8080;
-		final ServerSocket serverSocket = new ServerSocket(prometheusPort);
-		final Socket client = serverSocket.accept();
+		final PrometheusWorker worker = new PrometheusWorker(executorService, configuration, stateMachineFactory);
+		try
+		{
+			worker.call();
+		}
+		catch (final Exception e)
+		{
+			LOGGER.error("An internal error occurred.", e);
+		}
 
-		executorService.submit(new ConnectionHandler(client));
+		LOGGER.info("Prometheus finishes his work.");
 	}
 }
